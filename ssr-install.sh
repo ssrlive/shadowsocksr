@@ -14,8 +14,6 @@ echo "# Github: https://github.com/ShadowsocksR-Live/shadowsocksr #"
 echo "#############################################################"
 echo
 
-libsodium_file="libsodium-1.0.17"
-libsodium_url="https://github.com/jedisct1/libsodium/releases/download/1.0.17/libsodium-1.0.17.tar.gz"
 shadowsocks_r_url="https://github.com/ShadowsocksR-Live/shadowsocksr.git"
 src_dir=pyssr
 
@@ -302,21 +300,16 @@ pre_install(){
     char=`get_char`
     # Install necessary dependencies
     if check_sys packageManager yum; then
-        yum install -y python python-devel python-setuptools openssl openssl-devel curl wget unzip gcc automake autoconf make libtool
+        yum install -y python python-devel python-setuptools openssl openssl-devel curl wget unzip libsodium-devel
     elif check_sys packageManager apt; then
         apt-get -y update
-        apt-get -y install python python-dev python-setuptools openssl libssl-dev curl wget unzip gcc automake autoconf make libtool
+        apt-get -y install python python-dev python-setuptools openssl libssl-dev curl wget unzip libsodium-dev
     fi
     cd ${cur_dir}
 }
 
 # Download files
 download_files(){
-    # Download libsodium file
-    if ! wget --no-check-certificate -O ${libsodium_file}.tar.gz ${libsodium_url}; then
-        echo -e "[${red}Error${plain}] Failed to download ${libsodium_file}.tar.gz!"
-        exit 1
-    fi
     # Download ShadowsocksR file
     if ! git clone -b old ${shadowsocks_r_url} ${src_dir}; then
         echo -e "[${red}Error${plain}] Failed to get ShadowsocksR files!"
@@ -394,19 +387,6 @@ EOF
 
 # Install ShadowsocksR
 install(){
-    # Install libsodium
-    if [ ! -f /usr/lib/libsodium.a ]; then
-        cd ${cur_dir}
-        tar zxf ${libsodium_file}.tar.gz
-        cd ${libsodium_file}
-        ./configure --prefix=/usr && make && make install
-        if [ $? -ne 0 ]; then
-            echo -e "[${red}Error${plain}] libsodium install failed!"
-            install_cleanup
-            exit 1
-        fi
-    fi
-
     ldconfig
     # Install ShadowsocksR
     cd ${cur_dir}
@@ -444,7 +424,7 @@ install(){
 # Install cleanup
 install_cleanup(){
     cd ${cur_dir}
-    rm -rf ${src_dir} ${libsodium_file}.tar.gz ${libsodium_file}
+    rm -rf ${src_dir}
 }
 
 
@@ -501,3 +481,4 @@ case "$action" in
         echo "Usage: `basename $0` [install|uninstall]"
         ;;
 esac
+
