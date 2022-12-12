@@ -18,7 +18,13 @@
 from __future__ import absolute_import, division, print_function, \
     with_statement
 
-import collections
+import sys
+# https://stackoverflow.com/questions/70943244/attributeerror-module-collections-has-no-attribute-mutablemapping
+if sys.version_info.major == 3 and sys.version_info.minor >= 10:
+    from collections.abc import MutableMapping
+else:
+    from collections import MutableMapping
+
 import logging
 import time
 
@@ -41,7 +47,7 @@ except:
 
 SWEEP_MAX_ITEMS = 1024
 
-class LRUCache(collections.MutableMapping):
+class LRUCache(MutableMapping):
     """This class is not thread safe"""
 
     def __init__(self, timeout=60, close_callback=None, *args, **kwargs):

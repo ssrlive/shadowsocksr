@@ -857,7 +857,7 @@ class TCPRelayHandler(object):
             if self._encryptor is not None:
                 if self._encrypt_correct:
                     try:
-                        obfs_decode = self._obfs.server_decode(data)
+                        result_data, need_decrypt, need_feedback = self._obfs.server_decode(data)
                         if self._stage == STAGE_INIT:
                             self._overhead = self._obfs.get_overhead(self._is_local) + self._protocol.get_overhead(self._is_local)
                             server_info = self._protocol.get_server_info()
@@ -867,7 +867,7 @@ class TCPRelayHandler(object):
                         logging.error("exception from %s:%d" % (self._client_address[0], self._client_address[1]))
                         self.destroy()
                         return
-                    if obfs_decode[2]:
+                    if need_feedback:
                         data = self._obfs.server_encode(b'')
                         try:
                             self._write_to_sock(data, self._local_sock)
@@ -878,13 +878,13 @@ class TCPRelayHandler(object):
                             logging.error("exception from %s:%d" % (self._client_address[0], self._client_address[1]))
                             self.destroy()
                             return
-                    if obfs_decode[1]:
+                    if need_decrypt:
                         if not self._protocol.obfs.server_info.recv_iv:
                             iv_len = len(self._protocol.obfs.server_info.iv)
-                            self._protocol.obfs.server_info.recv_iv = obfs_decode[0][:iv_len]
-                        data = self._encryptor.decrypt(obfs_decode[0])
+                            self._protocol.obfs.server_info.recv_iv = result_data[:iv_len]
+                        data = self._encryptor.decrypt(result_data)
                     else:
-                        data = obfs_decode[0]
+                        data = result_data
                     try:
                         data, sendback = self._protocol.server_post_decrypt(data)
                         if sendback:

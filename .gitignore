@@ -1,5 +1,9 @@
 *.py[co]
 
+.vscode/
+*.dll
+nohup.out
+
 # Packages
 *.egg
 *.egg-info

@@ -1,4 +1,8 @@
-import collections
+import sys
+if sys.version_info.major == 3 and sys.version_info.minor >= 10:
+    from collections.abc import MutableMapping
+else:
+    from collections import MutableMapping
 
 ################################################################################
 ### OrderedDict
@@ -109,7 +113,7 @@ class OrderedDict(dict):
         for k in self:
             yield (k, self[k])
 
-    update = collections.MutableMapping.update
+    update = MutableMapping.update
 
     __update = update # let subclasses override update without breaking __init__
 
