@@ -424,7 +424,7 @@ class DNSResolver(object):
         else:
             data, addr = sock.recvfrom(1024)
             if addr not in self._servers:
-                logging.warn('received a packet other than our dns')
+                logging.warning('received a packet other than our dns')
                 return
             self._handle_data(data)
 

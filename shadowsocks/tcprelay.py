@@ -340,7 +340,7 @@ class TCPRelayHandler(object):
 
                     frag = common.ord(data[2])
                     if frag != 0:
-                        logging.warn('drop a message since frag is %d' % (frag,))
+                        logging.warning('drop a message since frag is %d' % (frag,))
                         continue
                     else:
                         data = data[3:]
@@ -518,7 +518,7 @@ class TCPRelayHandler(object):
             return ("0.0.0.0", 0)
 
     def _handel_protocol_error(self, client_address, ogn_data):
-        logging.warn("Protocol ERROR, TCP ogn data %s from %s:%d via port %d by UID %d" % (binascii.hexlify(ogn_data), client_address[0], client_address[1], self._server._listen_port, self._user_id))
+        logging.warning("Protocol ERROR, TCP ogn data %s from %s:%d via port %d by UID %d" % (binascii.hexlify(ogn_data), client_address[0], client_address[1], self._server._listen_port, self._user_id))
         self._encrypt_correct = False
         #create redirect or disconnect by hash code
         host, port = self._get_redirect_host(client_address, ogn_data)
@@ -526,7 +526,7 @@ class TCPRelayHandler(object):
             raise Exception('can not parse header')
         data = b"\x03" + common.to_bytes(common.chr(len(host))) + common.to_bytes(host) + struct.pack('>H', port)
         self._is_redirect = True
-        logging.warn("TCP data redir %s:%d %s" % (host, port, binascii.hexlify(data)))
+        logging.warning("TCP data redir %s:%d %s" % (host, port, binascii.hexlify(data)))
         return data + ogn_data
 
     def _handle_stage_connecting(self, data):
@@ -694,7 +694,7 @@ class TCPRelayHandler(object):
                 try:
                     sock.bind((bind_addr, 0))
                 except Exception as e:
-                    logging.warn("bind %s fail" % (bind_addr,))
+                    logging.warning("bind %s fail" % (bind_addr,))
 
     def _create_remote_socket(self, ip, port):
         if self._remote_udp:
@@ -1079,7 +1079,7 @@ class TCPRelayHandler(object):
                 handle = True
                 self._on_local_write()
         else:
-            logging.warn('unknown socket from %s:%d' % (self._client_address[0], self._client_address[1]))
+            logging.warning('unknown socket from %s:%d' % (self._client_address[0], self._client_address[1]))
             try:
                 self._loop.removefd(fd)
             except Exception as e:
@@ -1436,7 +1436,7 @@ class TCPRelay(object):
                 if handler:
                     handle = handler.handle_event(sock, fd, event)
                 else:
-                    logging.warn('unknown fd')
+                    logging.warning('unknown fd')
                     handle = True
                     try:
                         self._eventloop.removefd(fd)
@@ -1444,7 +1444,7 @@ class TCPRelay(object):
                         shell.print_exception(e)
                     sock.close()
             else:
-                logging.warn('poll removed fd')
+                logging.warning('poll removed fd')
                 handle = True
                 if fd in self._fd_to_handlers:
                     try:
