@@ -687,7 +687,7 @@ class auth_aes128_sha1(auth_base):
             if time_dif < -self.max_time_dif or time_dif > self.max_time_dif:
                 logging.info('%s: wrong timestamp, time_dif %d, data %s' % (self.no_compatible_method, time_dif, binascii.hexlify(head)))
                 return self.not_match_return(self.recv_buf)
-            elif self.server_info.data.insert(self.user_id, client_id, connection_id):
+            if self.server_info.data.insert(self.user_id, client_id, connection_id):
                 self.has_recv_header = True
                 out_buf = self.recv_buf[31 + rnd_len:length - 4]
                 self.client_id = client_id

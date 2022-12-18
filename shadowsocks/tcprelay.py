@@ -1404,7 +1404,6 @@ class TCPRelay(object):
                 # TODO
                 raise Exception('server_socket error')
             tcp_handler = None
-            success = True
             try:
                 logging.debug('accept')
                 incoming, _ = self._server_socket.accept()
@@ -1413,10 +1412,11 @@ class TCPRelay(object):
                                 self._dns_resolver, self._is_local)
                 if tcp_handler.stage() == STAGE_DESTROYED:
                     incoming.close()
+                success = True
             except (OSError, IOError) as e:
                 error_no = eventloop.errno_from_exception(e)
                 if error_no in (errno.EAGAIN, errno.EINPROGRESS, errno.EWOULDBLOCK):
-                    return
+                    success = True
                 else:
                     shell.print_exception(e)
                     if self._config['verbose']:
