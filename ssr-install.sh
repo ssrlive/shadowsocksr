@@ -311,7 +311,7 @@ pre_install(){
 # Download files
 download_files(){
     # Download ShadowsocksR file
-    if ! git clone -b old ${shadowsocks_r_url} ${src_dir}; then
+    if ! git clone -b manyuser ${shadowsocks_r_url} ${src_dir}; then
         echo -e "[${red}Error${plain}] Failed to get ShadowsocksR files!"
         exit 1
     fi

@@ -12,7 +12,7 @@ Server
 ```
 sudo su
 
-wget --no-check-certificate https://raw.githubusercontent.com/ShadowsocksR-Live/shadowsocksr/old/ssr-install.sh
+wget --no-check-certificate https://raw.githubusercontent.com/ShadowsocksR-Live/shadowsocksr/manyuser/ssr-install.sh
 
 chmod +x ssr-install.sh
 
