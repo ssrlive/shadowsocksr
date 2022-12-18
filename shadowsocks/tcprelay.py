@@ -146,7 +146,7 @@ class TCPRelayHandler(object):
         self._accept_address = local_sock.getsockname()[:2]
         self._user = None
         self._user_id = server._listen_port
-        self._update_tcp_mss(local_sock)
+        self._tcp_mss = self._update_tcp_mss(local_sock)
 
         # TCP Relay works as either sslocal or ssserver
         # if is_local, this is sslocal
@@ -160,10 +160,6 @@ class TCPRelayHandler(object):
         server_info = obfs.server_info(server.obfs_data)
         server_info.host = config['server']
         server_info.port = server._listen_port
-        #server_info.users = server.server_users
-        #server_info.update_user_func = self._update_user
-        server_info.client = self._client_address[0]
-        server_info.client_port = self._client_address[1]
         server_info.protocol_param = ''
         server_info.obfs_param = config['obfs_param']
         server_info.iv = self._encryptor.cipher_iv
@@ -254,19 +250,19 @@ class TCPRelayHandler(object):
         return server, server_port
 
     def _update_tcp_mss(self, local_sock):
-        self._tcp_mss = TCP_MSS
+        result_mss = TCP_MSS
         try:
             tcp_mss = local_sock.getsockopt(socket.SOL_TCP, socket.TCP_MAXSEG)
             if tcp_mss > 500 and tcp_mss <= 1500:
-                self._tcp_mss = tcp_mss
-            logging.debug("TCP MSS = %d" % (self._tcp_mss,))
+                result_mss = tcp_mss
+            logging.debug("TCP MSS = %d" % (result_mss,))
         except:
             pass
+        return result_mss
 
     def _create_encryptor(self, config):
         try:
-            self._encryptor = encrypt.Encryptor(config['password'],
-                                                config['method'])
+            self._encryptor = encrypt.Encryptor(config['password'], config['method'])
             return True
         except Exception:
             self._stage = STAGE_DESTROYED
@@ -595,8 +591,7 @@ class TCPRelayHandler(object):
                     else:
                         header = b'\x05\x00\x00\x01'
                     addr, port = self._local_sock.getsockname()[:2]
-                    addr_to_send = socket.inet_pton(self._local_sock.family,
-                                                    addr)
+                    addr_to_send = socket.inet_pton(self._local_sock.family, addr)
                     port_to_send = struct.pack('>H', port)
                     self._write_to_sock(header + addr_to_send + port_to_send,
                                         self._local_sock)
@@ -922,8 +917,7 @@ class TCPRelayHandler(object):
             self._stage = STAGE_ADDR
         elif self._stage == STAGE_CONNECTING:
             self._handle_stage_connecting(data)
-        elif (is_local and self._stage == STAGE_ADDR) or \
-                (not is_local and self._stage == STAGE_INIT):
+        elif (is_local and self._stage == STAGE_ADDR) or (not is_local and self._stage == STAGE_INIT):
             self._handle_stage_addr(ogn_data, data)
 
     def _on_remote_read(self, is_remote_sock):
@@ -1401,7 +1395,7 @@ class TCPRelay(object):
 
     def handle_event(self, sock, fd, event):
         # handle events and dispatch to handlers
-        handle = False
+        success = False
         if sock:
             logging.log(shell.VERBOSE_LEVEL, 'fd %d %s', fd,
                         eventloop.EVENT_NAMES.get(event, event))
@@ -1409,35 +1403,34 @@ class TCPRelay(object):
             if event & eventloop.POLL_ERR:
                 # TODO
                 raise Exception('server_socket error')
-            handler = None
-            handle = True
+            tcp_handler = None
+            success = True
             try:
                 logging.debug('accept')
-                conn = self._server_socket.accept()
-                handler = TCPRelayHandler(self, self._fd_to_handlers,
-                                self._eventloop, conn[0], self._config,
+                incoming, _ = self._server_socket.accept()
+                tcp_handler = TCPRelayHandler(self, self._fd_to_handlers,
+                                self._eventloop, incoming, self._config,
                                 self._dns_resolver, self._is_local)
-                if handler.stage() == STAGE_DESTROYED:
-                    conn[0].close()
+                if tcp_handler.stage() == STAGE_DESTROYED:
+                    incoming.close()
             except (OSError, IOError) as e:
                 error_no = eventloop.errno_from_exception(e)
-                if error_no in (errno.EAGAIN, errno.EINPROGRESS,
-                                errno.EWOULDBLOCK):
+                if error_no in (errno.EAGAIN, errno.EINPROGRESS, errno.EWOULDBLOCK):
                     return
                 else:
                     shell.print_exception(e)
                     if self._config['verbose']:
                         traceback.print_exc()
-                    if handler:
-                        handler.destroy()
+                    if tcp_handler:
+                        tcp_handler.destroy()
         else:
             if sock:
-                handler = self._fd_to_handlers.get(fd, None)
-                if handler:
-                    handle = handler.handle_event(sock, fd, event)
+                tcp_handler = self._fd_to_handlers.get(fd, None)
+                if tcp_handler:
+                    success = tcp_handler.handle_event(sock, fd, event)
                 else:
                     logging.warning('unknown fd')
-                    handle = True
+                    success = True
                     try:
                         self._eventloop.removefd(fd)
                     except Exception as e:
@@ -1445,13 +1438,13 @@ class TCPRelay(object):
                     sock.close()
             else:
                 logging.warning('poll removed fd')
-                handle = True
+                success = True
                 if fd in self._fd_to_handlers:
                     try:
                         del self._fd_to_handlers[fd]
                     except Exception as e:
                         shell.print_exception(e)
-        return handle
+        return success
 
     def handle_periodic(self):
         if self._closed:
@@ -1460,8 +1453,8 @@ class TCPRelay(object):
                 self._server_socket.close()
                 self._server_socket = None
                 logging.info('closed TCP port %d', self._listen_port)
-            for handler in list(self._fd_to_handlers.values()):
-                handler.destroy()
+            for tcp_handler in list(self._fd_to_handlers.values()):
+                tcp_handler.destroy()
         self._sweep_timeout()
 
     def close(self, next_tick=False):
@@ -1472,5 +1465,5 @@ class TCPRelay(object):
                 self._eventloop.remove_periodic(self.handle_periodic)
                 self._eventloop.removefd(self._server_socket_fd)
             self._server_socket.close()
-            for handler in list(self._fd_to_handlers.values()):
-                handler.destroy()
+            for tcp_handler in list(self._fd_to_handlers.values()):
+                tcp_handler.destroy()

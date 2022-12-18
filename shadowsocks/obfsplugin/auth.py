@@ -406,15 +406,15 @@ class auth_sha1_v4(auth_base):
 
 class obfs_auth_mu_data(object):
     def __init__(self):
-        self.user_id = {}
+        self.user_id_container = {}
         self.local_client_id = b''
         self.connection_id = 0
         self.set_max_client(64) # max active client count
 
     def update(self, user_id, client_id, connection_id):
-        if user_id not in self.user_id:
-            self.user_id[user_id] = lru_cache.LRUCache()
-        local_client_id = self.user_id[user_id]
+        if user_id not in self.user_id_container:
+            self.user_id_container[user_id] = lru_cache.LRUCache()
+        local_client_id = self.user_id_container[user_id]
 
         if client_id in local_client_id:
             local_client_id[client_id].update()
@@ -424,9 +424,9 @@ class obfs_auth_mu_data(object):
         self.max_buffer = max(self.max_client * 2, 1024)
 
     def insert(self, user_id, client_id, connection_id):
-        if user_id not in self.user_id:
-            self.user_id[user_id] = lru_cache.LRUCache()
-        local_client_id = self.user_id[user_id]
+        if user_id not in self.user_id_container:
+            self.user_id_container[user_id] = lru_cache.LRUCache()
+        local_client_id = self.user_id_container[user_id]
 
         if local_client_id.get(client_id, None) is None or not local_client_id[client_id].enable:
             if local_client_id.first() is None or len(local_client_id) < self.max_client:
