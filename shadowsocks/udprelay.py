@@ -313,7 +313,7 @@ class UDPRelay(object):
 
     def _handel_protocol_error(self, client_address, ogn_data):
         #raise Exception('can not parse header')
-        logging.warn("Protocol ERROR, UDP ogn data %s from %s:%d" % (binascii.hexlify(ogn_data), client_address[0], client_address[1]))
+        logging.warning("Protocol ERROR, UDP ogn data %s from %s:%d" % (binascii.hexlify(ogn_data), client_address[0], client_address[1]))
 
     def _socket_bind_addr(self, sock, af):
         bind_addr = ''
@@ -332,7 +332,7 @@ class UDPRelay(object):
                 try:
                     sock.bind((bind_addr, 0))
                 except Exception as e:
-                    logging.warn("bind %s fail" % (bind_addr,))
+                    logging.warning("bind %s fail" % (bind_addr,))
 
     def _handle_server(self):
         server = self._server_socket
@@ -346,7 +346,7 @@ class UDPRelay(object):
         if self._is_local:
             frag = common.ord(data[2])
             if frag != 0:
-                logging.warn('drop a message since frag is not 0')
+                logging.warning('drop a message since frag is not 0')
                 return
             else:
                 data = data[3:]
@@ -623,7 +623,7 @@ class UDPRelay(object):
                 if handler:
                     handler.handle_event(sock, event)
             else:
-                logging.warn('poll removed fd')
+                logging.warning('poll removed fd')
 
     def handle_periodic(self):
         if self._closed:

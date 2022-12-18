@@ -148,7 +148,7 @@ def main():
 
     def run_server():
         def child_handler(signum, _):
-            logging.warn('received SIGQUIT, doing graceful shutting down..')
+            logging.warning('received SIGQUIT, doing graceful shutting down..')
             list(map(lambda s: s.close(next_tick=True),
                      tcp_servers + udp_servers))
         signal.signal(getattr(signal, 'SIGQUIT', signal.SIGTERM),
@@ -205,7 +205,7 @@ def main():
                 for child in children:
                     os.waitpid(child, 0)
         else:
-            logging.warn('worker is only available on Unix/Linux')
+            logging.warning('worker is only available on Unix/Linux')
             run_server()
     else:
         run_server()

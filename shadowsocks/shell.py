@@ -286,7 +286,7 @@ def get_config(is_local):
     elif config['verbose'] == 1:
         level = logging.DEBUG
     elif config['verbose'] == -1:
-        level = logging.WARN
+        level = logging.WARNING
     elif config['verbose'] <= -2:
         level = logging.ERROR
     else:

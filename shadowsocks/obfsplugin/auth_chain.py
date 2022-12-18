@@ -151,19 +151,19 @@ class client_queue(object):
 
     def insert(self, connection_id):
         if not self.enable:
-            logging.warn('obfs auth: not enable')
+            logging.warning('obfs auth: not enable')
             return False
         if not self.is_active():
             self.re_enable(connection_id)
         self.update()
         if connection_id < self.front:
-            logging.warn('obfs auth: deprecated id, someone replay attack')
+            logging.warning('obfs auth: deprecated id, someone replay attack')
             return False
         if connection_id > self.front + 0x4000:
-            logging.warn('obfs auth: wrong id')
+            logging.warning('obfs auth: wrong id')
             return False
         if connection_id in self.alloc:
-            logging.warn('obfs auth: duplicate id, someone replay attack')
+            logging.warning('obfs auth: duplicate id, someone replay attack')
             return False
         if self.back <= connection_id:
             self.back = connection_id + 1
@@ -218,7 +218,7 @@ class obfs_auth_chain_data(object):
                     local_client_id[client_id].re_enable(connection_id)
                 return local_client_id[client_id].insert(connection_id)
 
-            logging.warn(self.name + ': no inactive client')
+            logging.warning(self.name + ': no inactive client')
             return False
         else:
             return local_client_id[client_id].insert(connection_id)

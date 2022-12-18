@@ -264,7 +264,7 @@ class TransferBase(object):
 				except Exception as e:
 					trace = traceback.format_exc()
 					logging.error(trace)
-					#logging.warn('db thread except:%s' % e)
+					#logging.warning('db thread except:%s' % e)
 				if db_instance.event.wait(get_config().UPDATE_TIME) or not ServerPool.get_instance().thread.is_alive():
 					break
 		except KeyboardInterrupt as e:
@@ -388,7 +388,7 @@ class DbTransfer(TransferBase):
 			conn.close()
 
 		if not rows:
-			logging.warn('no user in db')
+			logging.warning('no user in db')
 		return rows
 
 	def pull_db_users(self, conn):
@@ -475,7 +475,7 @@ class Dbv3Transfer(DbTransfer):
 							str(self.cfg["node_id"]) + "', '" + str(self.cfg["transfer_mul"]) + "', '" + \
 							self.traffic_format((transfer[0] + transfer[1]) * self.cfg["transfer_mul"]) + "', unix_timestamp()); ")
 				except:
-					logging.warn('no `user_traffic_log` in db')
+					logging.warning('no `user_traffic_log` in db')
 				cur.close()
 
 			if query_sub_in is not None:
@@ -514,7 +514,7 @@ class Dbv3Transfer(DbTransfer):
 					logging.error(e)
 				cur.close()
 			except:
-				logging.warn('no `ss_node_online_log` or `" + self.ss_node_info_name + "` in db')
+				logging.warning('no `ss_node_online_log` or `" + self.ss_node_info_name + "` in db')
 
 		conn.close()
 		return update_transfer
@@ -541,7 +541,7 @@ class Dbv3Transfer(DbTransfer):
 				rows = []
 				cur.close()
 				conn.commit()
-				logging.warn('None result when select node info from ss_node in db, maybe you set the incorrect node id')
+				logging.warning('None result when select node info from ss_node in db, maybe you set the incorrect node id')
 				return rows
 			cur.close()
 
@@ -626,6 +626,6 @@ class MuJsonTransfer(TransferBase):
 					logging.error(e)
 
 		if not rows:
-			logging.warn('no user in json file')
+			logging.warning('no user in json file')
 		return rows
 
